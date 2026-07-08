@@ -33,6 +33,15 @@ CAMERAS_TO_MONITOR = [
 
 BASE_URL = f"https://{UNIFI_HOST}"
 
+import logging
+
+# Configure logging format: [YYYY-MM-DD HH:MM:SS] [LEVEL] Message
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
 # ---------------------
 def get_unifi_session():
     """Authenticates and returns an active API session with CSRF tokens."""
@@ -52,19 +61,19 @@ def get_unifi_session():
                 session.headers.update({"X-CSRF-Token": login_resp.headers["X-CSRF-Token"]})
             return session
         else:
-            print(f"[ERROR] Login failed. HTTP {login_resp.status_code}")
-            #print(f"Reason: {login_resp.reason}")
-            #print(f"Response: {login_resp.text}")
-            #print(f"Headers returned: {dict(login_resp.headers)}")
+            logging.error(f"[ERROR] Login failed. HTTP {login_resp.status_code}")
+            loggin.debug(f"Reason: {login_resp.reason}")
+            logging.debug(f"Response: {login_resp.text}")
+            logging.debug(f"Headers returned: {dict(login_resp.headers)}")
             return None
     except Exception as e:
-        print(f"[ERROR] Could not connect to UniFi Gateway: {e}")
+        logging.error(f"[ERROR] Could not connect to UniFi Gateway: {e}")
     return None
 
 def check_cameras_and_cycle():
     session = get_unifi_session()
     if not session:
-        print("[ERROR] No active session.")
+        logging.error("[ERROR] No active session.")
         return
 
     try:
@@ -73,7 +82,7 @@ def check_cameras_and_cycle():
         response = session.get(client_url, timeout=10)
 
         if response.status_code != 200:
-            print(f"[ERROR] Failed to fetch clients. HTTP {response.status_code}")
+            logging.error(f"[ERROR] Failed to fetch clients. HTTP {response.status_code}")
             return
 
         #clients = {c['mac'].lower(): c for c in response.json().get('data', [])}
@@ -83,21 +92,21 @@ def check_cameras_and_cycle():
             cam_mac = cam["mac"].lower()
 
             if cam_mac not in all_devices:
-                print(f"[WARN] {cam['name']} ({cam_mac}) not found in UniFi database. Check MAC.")
+                logging.warning(f"[WARN] {cam['name']} ({cam_mac}) not found in UniFi database. Check MAC.")
                 continue
 
             device_data = all_devices[cam_mac]
             # Read UniFi's explicit online status flag
             # In the rest/user endpoint, it's explicitly boolean True or False
             is_online = is_camera_online(device_data)
-            print(f"[{cam['name']}] Status flag: {'ONLINE' if is_online else 'OFFLINE'}")
+            logging.info(f"[{cam['name']}] Status flag: {'ONLINE' if is_online else 'OFFLINE'}")
             if not is_online:
-                print(f"[ALERT] {cam['name']} is explicitly flagged OFFLINE. Cycling port {cam['port']}...")
+                logging.warning(f"[ALERT] {cam['name']} is explicitly flagged OFFLINE. Cycling port {cam['port']}...")
                 # Issue Power-Cycle Command
                 power_cycle_poe_port(session, cam["port"])
 
     except Exception as e:
-        print(f"[ERROR] Error during processing: {e}")
+        logging.error(f"[ERROR] Error during processing: {e}")
 
 def is_camera_online(device_data):
     # Navigate into the nested dictionary safely using .get()
@@ -120,9 +129,9 @@ def power_cycle_poe_port(session, port_index):
     cmd_resp = session.post(cmd_url, json=cmd_payload, timeout=10)
 
     if cmd_resp.status_code == 200:
-        print(f"[SUCCESS] Port {port_index} power cycled.")
+        logging.info(f"[SUCCESS] Port {port_index} power cycled.")
     else:
-        print(f"[ERROR] Power cycle command failed: {cmd_resp.text}")
+        logging.error(f"[ERROR] Power cycle command failed: {cmd_resp.text}")
 
 if __name__ == "__main__":
     check_cameras_and_cycle()
