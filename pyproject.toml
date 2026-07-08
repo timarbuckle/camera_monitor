@@ -1,0 +1,11 @@
+[project]
+name = "camera-monitor"
+version = "0.1.0"
+description = "Monitor online status of Unifi cameras and power cycle POE ports when offline"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "dotenv>=0.9.9",
+    "requests>=2.34.2",
+    "urllib3>=2.7.0",
+]
