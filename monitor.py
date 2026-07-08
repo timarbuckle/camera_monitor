@@ -1,3 +1,11 @@
+# /// script
+# dependencies = [
+#   "dotenv",
+#   "requests",
+#   "urllib3",
+# ]
+# ///
+
 import dotenv
 import requests
 import urllib3
