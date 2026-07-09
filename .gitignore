@@ -1,4 +1,4 @@
-# Python-generated files
+ Python-generated files
 __pycache__/
 *.py[oc]
 build/
@@ -10,3 +10,12 @@ wheels/
 .venv
 .env
 monitor.log
+
+camera_monitor_ex/_build/
+camera_monitor_ex/cover/
+camera_monitor_ex/deps/
+camera_monitor_ex/doc/
+camera_monitor_ex/.fetch
+erl_crash.dump
+*.ez
+camera_monitor_ex-*.tar
