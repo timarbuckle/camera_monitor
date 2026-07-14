@@ -1,3 +1,8 @@
+Mix.install([
+  {:dotenvy, "~> 0.8.0"},
+  {:req, "~> 0.5.0"},
+])
+
 require Logger
 
 defmodule CameraMonitor do
@@ -38,7 +43,7 @@ defmodule CameraMonitor do
     # Configure base client options (disable SSL verification equivalent to urllib3.disable_warnings)
     base_client = Req.new(
       base_url: @base_url,
-      connect_options: [transport_options: [verify: :verify_none]],
+      connect_options: [transport_opts: [verify: :verify_none]],
       headers: [
         {"referer", "#{@base_url}/"},
         {"content-type", "application/json"}
@@ -46,11 +51,11 @@ defmodule CameraMonitor do
     )
 
     case Req.post(base_client, url: "/api/auth/login", json: %{username: user, password: pass}) do
-      {:ok, %Req.Response{status: 200, headers: headers} = response} ->
+      {:ok, %Req.Response{status: 200, headers: headers} = _response} ->
         # Extract CSRF token if present
         case Enum.find(headers, fn {k, _v} -> String.downcase(k) == "x-csrf-token" end) do
           {_key, token} ->
-            {:ok, Req.update(base_client, headers: [{"x-csrf-token", token}])}
+            {:ok, Req.merge(base_client, headers: [{"x-csrf-token", token}])}
           nil ->
             {:ok, base_client}
         end
